@@ -536,7 +536,31 @@ class LabelConverter:
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(self.custom_data, f, indent=2, ensure_ascii=False)
 
-    def custom_to_yolo(self, input_file, output_file):
+    # get attribute label
+    def _init_attribute_label(self, attributes):
+        self.attributes = attributes
+        attribute_len = 0
+        for k1, v1 in self.attributes.items():
+            for k2, v2 in v1.items():
+                attribute_len += len(v2)-1
+            break
+        self.attribute_len = attribute_len
+
+    def attribute2label(self, label, attribute_values):
+        attribute_labels = np.zeros(self.attribute_len)
+
+        idx = 0
+        if len(attribute_values)>0:
+            for k,v in self.attributes[label].items():
+                assert len(v)>1
+                for i in range(1, len(v)):
+                    if attribute_values[k]==v[i]:
+                        attribute_labels[idx] = 1
+                    idx += 1
+        return attribute_labels
+
+    def custom_to_yolo(self, input_file, output_file, attributes):
+        self._init_attribute_label(attributes)
         with open(input_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
@@ -550,6 +574,9 @@ class LabelConverter:
                 if shape_type == "rectangle":
                     label = shape["label"]
                     points = shape["points"]
+                    attrubute_values = shape["attributes"]
+                    attrubute_labels = self.attribute2label(label, attrubute_values)
+
                     if len(points) == 2:
                         logger.warning(
                             "UserWarning: Diagonal vertex mode is deprecated in X-AnyLabeling release v2.2.0 or later.\n"
@@ -568,9 +595,15 @@ class LabelConverter:
                     width = abs(points[2][0] - points[0][0]) / image_width
                     height = abs(points[2][1] - points[0][1]) / image_height
 
-                    f.write(
-                        f"{class_index} {x_center} {y_center} {width} {height}\n"
-                    )
+                    if self.attribute_len == 0:
+                        f.write(
+                            f"{class_index} {x_center} {y_center} {width} {height}\n"
+                        )
+                    else:
+                        attrubute_labels_str = ' '.join(["%d"%label for label in attrubute_labels])
+                        f.write(
+                            f"{class_index} {self.attribute_len} {attrubute_labels_str} {x_center} {y_center} {width} {height}\n"
+                        )
                 elif shape_type == "polygon":
                     label = shape["label"]
                     points = np.array(shape["points"])

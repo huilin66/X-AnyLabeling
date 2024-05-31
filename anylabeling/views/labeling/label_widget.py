@@ -3882,33 +3882,40 @@ class LabelingWidget(LabelDialog):
                 )
                 return
 
-        label_dir_path = osp.dirname(self.filename)
+        self.attributes_file = self.classes_file.replace('.txt', '.json')
+        json.dump(self.attributes, open("data.json", "w"))
+
+        label_read_dir_path = osp.dirname(self.filename)
+        save_dir_path = osp.dirname(self.classes_file)
         if self.output_dir:
-            label_dir_path = self.output_dir
+            save_dir_path = self.output_dir
         image_list = self.image_list
         if not image_list:
             image_list = [self.filename]
-        save_path = osp.realpath(osp.join(label_dir_path, "..", "labels"))
-        os.makedirs(save_path, exist_ok=True)
+        label_save_path = osp.realpath(osp.join(save_dir_path, "labels"))
+        image_save_path = osp.realpath(osp.join(save_dir_path, "images"))
+        os.makedirs(label_save_path, exist_ok=True)
+        os.makedirs(image_save_path, exist_ok=True)
         converter = LabelConverter(classes_file=self.classes_file)
-        label_file_list = os.listdir(label_dir_path)
+
         try:
             for image_file in image_list:
                 image_file_name = osp.basename(image_file)
                 label_file_name = osp.splitext(image_file_name)[0] + ".json"
                 dst_file_name = osp.splitext(image_file_name)[0] + ".txt"
-                dst_file = osp.join(save_path, dst_file_name)
-                if label_file_name not in label_file_list:
-                    pathlib.Path(dst_file).touch()
-                else:
-                    src_file = osp.join(label_dir_path, label_file_name)
-                    converter.custom_to_yolo(src_file, dst_file)
+                src_file = osp.join(label_read_dir_path, label_file_name)
+                dst_file = osp.join(label_save_path, dst_file_name)
+                dst_img = osp.join(image_save_path, image_file_name)
+                if osp.exists(src_file):
+                    converter.custom_to_yolo(src_file, dst_file, self.attributes)
+                    shutil.copy(image_file, dst_img)
+
             QtWidgets.QMessageBox.information(
                 self,
                 self.tr("Success"),
                 self.tr(
                     f"Annotation exported successfully!\n"
-                    f"Check the results in: {save_path}."
+                    f"Check the results in: {label_save_path}."
                 ),
                 QtWidgets.QMessageBox.Ok,
             )
