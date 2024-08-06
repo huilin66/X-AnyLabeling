@@ -607,18 +607,36 @@ class LabelConverter:
                 elif shape_type == "polygon":
                     label = shape["label"]
                     points = np.array(shape["points"])
+                    attrubute_values = shape["attributes"]
+                    attrubute_labels = self.attribute2label(label, attrubute_values)
+
                     class_index = self.classes.index(label)
                     norm_points = points / image_size
-                    f.write(
-                        f"{class_index} "
-                        + " ".join(
-                            [
-                                " ".join([str(cell[0]), str(cell[1])])
-                                for cell in norm_points.tolist()
-                            ]
+
+                    if self.attribute_len == 0:
+                        f.write(
+                            f"{class_index} "
+                            + " ".join(
+                                [
+                                    " ".join([str(cell[0]), str(cell[1])])
+                                    for cell in norm_points.tolist()
+                                ]
+                            )
+                            + "\n"
                         )
-                        + "\n"
-                    )
+                    else:
+                        attrubute_labels_str = ' '.join(["%d" % label for label in attrubute_labels])
+                        f.write(
+                            f"{class_index} {self.attribute_len} {attrubute_labels_str} "
+
+                            + " ".join(
+                                [
+                                    " ".join([str(cell[0]), str(cell[1])])
+                                    for cell in norm_points.tolist()
+                                ]
+                            )
+                            + "\n"
+                        )
                 elif shape_type == "rotation":
                     label = shape["label"]
                     points = list(chain.from_iterable(shape["points"]))
