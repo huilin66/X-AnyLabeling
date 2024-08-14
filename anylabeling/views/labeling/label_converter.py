@@ -574,8 +574,11 @@ class LabelConverter:
                 if shape_type == "rectangle":
                     label = shape["label"]
                     points = shape["points"]
-                    attrubute_values = shape["attributes"]
-                    attrubute_labels = self.attribute2label(label, attrubute_values)
+                    if 'attributes' in shape:
+                        attrubute_values = shape["attributes"]
+                        attrubute_labels = self.attribute2label(label, attrubute_values)
+                    else:
+                        self.attribute_len = 0
 
                     if len(points) == 2:
                         logger.warning(
@@ -607,8 +610,11 @@ class LabelConverter:
                 elif shape_type == "polygon":
                     label = shape["label"]
                     points = np.array(shape["points"])
-                    attrubute_values = shape["attributes"]
-                    attrubute_labels = self.attribute2label(label, attrubute_values)
+                    if 'attributes' in shape:
+                        attrubute_values = shape["attributes"]
+                        attrubute_labels = self.attribute2label(label, attrubute_values)
+                    else:
+                        self.attribute_len = 0
 
                     class_index = self.classes.index(label)
                     norm_points = points / image_size
