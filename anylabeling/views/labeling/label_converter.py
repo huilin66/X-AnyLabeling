@@ -539,24 +539,33 @@ class LabelConverter:
     # get attribute label
     def _init_attribute_label(self, attributes):
         self.attributes = attributes
-        attribute_len = 0
+        # attribute_len = 0
+        # for k1, v1 in self.attributes.items():
+        #     for k2, v2 in v1.items():
+        #         attribute_len += len(v2)-1
+        #     break
         for k1, v1 in self.attributes.items():
-            for k2, v2 in v1.items():
-                attribute_len += len(v2)-1
+            attribute_len = len(v1.items())
             break
         self.attribute_len = attribute_len
 
     def attribute2label(self, label, attribute_values):
         attribute_labels = np.zeros(self.attribute_len)
 
-        idx = 0
-        if len(attribute_values)>0:
-            for k,v in self.attributes[label].items():
-                assert len(v)>1
-                for i in range(1, len(v)):
-                    if attribute_values[k]==v[i]:
-                        attribute_labels[idx] = 1
-                    idx += 1
+        # idx = 0
+        # if len(attribute_values)>0:
+        #     for k,v in self.attributes[label].items():
+        #         assert len(v)>1
+        #         for i in range(1, len(v)):
+        #             if attribute_values[k]==v[i]:
+        #                 attribute_labels[idx] = 1
+        #             idx += 1
+
+        for idx, (k, v) in enumerate(self.attributes[label].items()):
+            if k not in attribute_values:
+                attribute_labels[idx] = 0
+            else:
+                attribute_labels[idx] = v.index(attribute_values[k])
         return attribute_labels
 
     def custom_to_yolo(self, input_file, output_file, attributes):
